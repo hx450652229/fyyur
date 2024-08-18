@@ -52,8 +52,46 @@
           <label for="seeking_description">Seeking Description</label>
           {{ form.seeking_description(class_ = 'form-control', autofocus = true) }}
       </div>
+
+      <!-- Availability Section -->
+      <div class="form-group">
+        <label for="availability">Availability</label>
+        <div id="availability-container">
+            {% for availability in availability_list %}
+            <div class="availability-entry form-inline">
+                <input type="datetime-local" name="availabilities[][start_time]" class="form-control" value="{{ availability['start_time'] }}" required>
+                <input type="datetime-local" name="availabilities[][end_time]" class="form-control" value="{{ availability['end_time'] }}" required>
+                <button type="button" class="btn btn-danger remove-availability">Remove</button>
+            </div>
+            {% endfor %}
+        </div>
+        <button type="button" id="add-availability" class="btn btn-secondary">Add Availability</button>
+      </div>
       
       <input type="submit" value="Edit Artist" class="btn btn-primary btn-lg btn-block">
     </form>
   </div>
+  <script>
+    document.getElementById('add-availability').addEventListener('click', function() {
+        var container = document.getElementById('availability-container');
+        var entry = document.createElement('div');
+        entry.className = 'availability-entry form-inline';
+        entry.innerHTML = `
+            <input type="datetime-local" name="availabilities[][start_time]" class="form-control" placeholder="Start Time" required>
+            <input type="datetime-local" name="availabilities[][end_time]" class="form-control" placeholder="End Time" required>
+            <button type="button" class="btn btn-danger remove-availability">Remove</button>
+        `;
+        container.appendChild(entry);
+
+        // Add event listener to the new remove button
+        entry.querySelector('.remove-availability').addEventListener('click', function() {
+            entry.remove();
+        });
+    });
+
+    // Initial remove button event listener
+    document.querySelector('.remove-availability').addEventListener('click', function() {
+        this.closest('.availability-entry').remove();
+    });
+  </script>
 {% endblock %}

@@ -43,6 +43,18 @@
 		<img src="{{ artist.image_link }}" alt="Venue Image" />
 	</div>
 </div>
+
+{% if artist.availability %}
+<section>
+    <h2 class="monospace">Availability</h2>
+    <ul>
+        {% for availability in artist.availability %}
+            <li>From {{availability.start_time|datetime('medium')}} To {{availability.end_time|datetime('medium') }}</li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+
 <section>
 	<h2 class="monospace">{{ artist.upcoming_shows_count }} Upcoming {% if artist.upcoming_shows_count == 1 %}Show{% else %}Shows{% endif %}</h2>
 	<div class="row">

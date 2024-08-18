@@ -75,6 +75,16 @@
                   aria-label="Search">
               </form>
               {% endif %}
+              {% if (request.endpoint == 'index') or
+                (request.endpoint == 'search_by_city_and_state') %}
+              <form class="search" method="post" action="/artists_and_venues/search">
+                <input class="form-control"
+                  type="search"
+                  name="search_term"
+                  placeholder='Search by "City, State"'
+                  aria-label="Search">
+              </form>
+              {% endif %}
             </li>
           </ul>
           <ul class="nav navbar-nav">

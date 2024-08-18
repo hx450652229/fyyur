@@ -1,0 +1,28 @@
+{% extends 'layouts/main.html' %}
+{% block title %}Fyyur | Search by City and State{% endblock %}
+{% block content %}
+<h3>Number of search results for "{{ search_term }}": {{ results.count }}</h3>
+<ul class="items">
+	{% for item in results.data %}
+        {% if 'artist_id' in item and 'artist_name' in item %}
+            <li>
+                <a href="/artists/{{ item['artist_id'] }}">
+                    <i class="fas fa-users"></i>
+                    <div class="item">
+                        <h5>{{ item['artist_name'] }}</h5>
+                    </div>
+                </a>
+            </li>
+        {% elif 'venue_id' in item and 'venue_name' in item %}
+            <li>
+                <a href="/venues/{{ item['venue_id'] }}">
+                    <i class="fas fa-music"></i>
+                    <div class="item">
+                        <h5>{{ item['venue_name'] }}</h5>
+                    </div>
+                </a>
+            </li>
+        {% endif %}
+	{% endfor %}
+</ul>
+{% endblock %}
