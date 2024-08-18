@@ -51,7 +51,7 @@ class Venue(db.Model):
   genres = db.Column(db.String)
   image_link = db.Column(db.String(500))
   facebook_link = db.Column(db.String(120))
-  website = db.Column(db.String(120))
+  website_link = db.Column(db.String(120))
   seeking_talent = db.Column(db.Boolean())
   seeking_description = db.Column(db.String)
 
@@ -59,7 +59,7 @@ class Venue(db.Model):
     return (f'<Venue id={self.id} name={self.name} city={self.city} state={self.state} '
             f'address={self.address} phone={self.phone} genres={self.genres} '
             f'image_link={self.image_link} facebook_link={self.facebook_link} '
-            f'website={self.website} seeking_talent={self.seeking_talent} '
+            f'website_link={self.website_link} seeking_talent={self.seeking_talent} '
             f'seeking_description={self.seeking_description}>')
        
 class Artist(db.Model):
@@ -72,7 +72,7 @@ class Artist(db.Model):
   genres = db.Column(db.String)
   image_link = db.Column(db.String(500))
   facebook_link = db.Column(db.String(120))
-  website = db.Column(db.String(120))
+  website_link = db.Column(db.String(120))
   seeking_venue = db.Column(db.Boolean())
   seeking_description = db.Column(db.String)
   availability = db.Column(db.String)
@@ -81,7 +81,7 @@ class Artist(db.Model):
     return (
         f"<Artist id={self.id}, name={self.name}, city={self.city}, state={self.state}, "
         f"phone={self.phone}, genres={self.genres}, image_link={self.image_link}, "
-        f"facebook_link={self.facebook_link}, website={self.website}, "
+        f"facebook_link={self.facebook_link}, website_link={self.website_link}, "
         f"seeking_venue={self.seeking_venue}, seeking_description={self.seeking_description}, "
         f"availability={self.availability}>"
     )
@@ -104,7 +104,12 @@ def get_availability_list(availability_artist) -> list[dict]:
     print(e)
     flash(f'Invalid availability: {availability_artist}')
     return list()
-  
+
+def flash_form_errors(form):
+  for field, errors in form.errors.items():
+    for error in errors:
+      flash(f"Error in {getattr(form, field).label.text}: {error}")
+
 #----------------------------------------------------------------------------#
 # Filters.
 #----------------------------------------------------------------------------#
@@ -224,7 +229,7 @@ def show_venue(venue_id):
     "city": venue.city,
     "state": venue.state,
     "phone": venue.phone,
-    "website": venue.website,
+    "website_link": venue.website_link,
     "facebook_link": venue.facebook_link,
     "seeking_talent": venue.seeking_talent,
     "seeking_description": venue.seeking_description,
@@ -341,7 +346,9 @@ def show_artist(artist_id):
     "upcoming_shows_count": upcoming_shows.count(),
     "past_shows": past_shows,
     "past_shows_count": past_shows.count(),
-    "availability": availability_list
+    "availability": availability_list,
+    "website_link": artist.website_link,
+    "facebook_link": artist.facebook_link
   }
 
   # add to recent queries
@@ -356,10 +363,9 @@ def show_artist(artist_id):
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
   try:
-    artist=Artist.query.get(artist_id)
+    artist = Artist.query.get(artist_id)
     form = ArtistForm(obj=artist)
     availability_list = get_availability_list(artist.availability)
-    print(availability_list)
 
     if artist.genres is not None:
       form.genres.data = artist.genres.split(',')
@@ -368,7 +374,7 @@ def edit_artist(artist_id):
   
   except Exception as e:
     print(e)
-    flash('An error occurred.')
+    flash(f'An error occurred: {e}')
     return render_template('pages/home.html', recent=recent_queries)
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
@@ -378,13 +384,17 @@ def edit_artist_submission(artist_id):
     form = ArtistForm(request.form)
     artist = Artist.query.get(artist_id)
     form.populate_obj(artist)
+    
     artist.genres = ','.join(form.genres.data)
 
     # serialize availability list
     start_times = request.form.getlist('availabilities[][start_time]')
     end_times = request.form.getlist('availabilities[][end_time]')
     artist.availability = ','.join([f'{start_time};{end_time}' for start_time, end_time in zip(start_times, end_times)])
-    print(artist.availability)
+
+    if not form.validate_on_submit():
+      flash_form_errors(form)
+      return render_template('forms/edit_artist.html', form=form, artist=artist, availability_list=get_availability_list(artist.availability))
 
     db.session.commit()
     flash(f'Artist {artist.name} was successfully updated!')
@@ -417,6 +427,11 @@ def edit_venue_submission(venue_id):
     venue = Venue.query.get(venue_id)
     form.populate_obj(venue)
     venue.genres = ','.join(form.genres.data)
+
+    if not form.validate_on_submit():
+      flash_form_errors(form)
+      return render_template('forms/edit_venue.html', form=form, venue=venue)
+
     db.session.commit()
     flash('Venue ' + request.form['name'] + ' was successfully updated!')
   except Exception as e:
